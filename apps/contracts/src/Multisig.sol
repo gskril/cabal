@@ -13,6 +13,19 @@ contract Account {
                                 STRUCTS
     //////////////////////////////////////////////////////////////*/
 
+    /// @notice A struct that contains the intent of a member to execute a call.
+    /// @custom:field messageHash The hash of the calldata that the member wants to execute.
+    /// @custom:field signature The signature of the member.
+    /// @custom:field pubKey The public key of the member.
+    struct SemaphoreIntent {
+        address to;
+        uint256 value;
+        bytes data;
+        bytes32 messageHash;
+        bytes32 signature;
+        bytes pubKey;
+    }
+
     /*//////////////////////////////////////////////////////////////
                                PARAMETERS
     //////////////////////////////////////////////////////////////*/
@@ -25,6 +38,10 @@ contract Account {
 
     /// @notice The Semaphore group ID for the account.
     uint256 public immutable semaphoreGroupId;
+
+    /// @notice The token that relayer fees are paid in.
+
+    /// @notice The amount of {token} that is paid to a relayer for executing a transaction.
 
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
@@ -39,13 +56,16 @@ contract Account {
 
     error ExecutionFailed();
     error InvalidProof();
-
+    error InvalidIntent();
     /*//////////////////////////////////////////////////////////////
                                MODIFIERS
     //////////////////////////////////////////////////////////////*/
 
-    modifier onlyMember(ISemaphore.SemaphoreProof calldata proof) {
+    // TODO: we need a way to stuff the proof with intended calldata or something so that it can only be used as intended
+    // https://docs.semaphore.pse.dev/guides/identities#sign-and-verify-messages
+    modifier onlyMember(ISemaphore.SemaphoreProof calldata proof, SemaphoreIntent calldata intent) {
         semaphore.validateProof(semaphoreGroupId, proof);
+        if (intent.messageHash != keccak256(abi.encode(intent.to, intent.value, intent.data))) revert InvalidIntent();
         _;
     }
 
@@ -70,10 +90,19 @@ contract Account {
 
     /// @notice Executes a call to an arbitrary contract.
     /// @dev This function is protected by the Semaphore proof, but can be called by anyone. This is meant to be used with relayers to preserve privacy.
-    function execute(address to, uint256 value, bytes calldata data, ISemaphore.SemaphoreProof calldata proof)
-        public
-        onlyMember(proof)
-    {
+    function execute(
+        address to,
+        bytes calldata data,
+        uint256 value,
+        ISemaphore.SemaphoreProof calldata proof,
+        SemaphoreIntent calldata intent
+    ) public {
+        // Verify the intent matches the calldata
+        if (intent.messageHash != keccak256(abi.encode(to, value, data))) revert InvalidIntent();
+
+        // Validate the Semaphore prof
+        semaphore.validateProof(semaphoreGroupId, proof);
+
         (bool success,) = to.call{value: value}(data);
         if (!success) revert ExecutionFailed();
     }
