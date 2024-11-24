@@ -4,7 +4,12 @@ import { Identity } from '@semaphore-protocol/identity'
 import { generateProof } from '@semaphore-protocol/proof'
 import { expect } from 'chai'
 import hre from 'hardhat'
-import { encodeAbiParameters, encodeFunctionData, keccak256 } from 'viem'
+import {
+  encodeAbiParameters,
+  encodeFunctionData,
+  keccak256,
+  parseAbi,
+} from 'viem'
 
 import { formatProof } from './utils'
 
@@ -158,5 +163,49 @@ describe('Tests', function () {
     )
 
     await expect(sendEtherTx).to.be.rejectedWith('InvalidIntent()')
+  })
+
+  it('should let a member add new members', async function () {
+    const { cabal } = await loadFixture(deploy)
+
+    const abiEncodedCalldata = encodeFunctionData({
+      abi: parseAbi([
+        'function addMember(uint256 groupId, uint256 identityCommitment)',
+      ]),
+      functionName: 'addMember',
+      args: [await cabal.read.semaphoreGroupId(), identity2.commitment],
+    })
+
+    const args = [
+      await cabal.read.semaphore(), // to
+      0n, // value
+      abiEncodedCalldata, // data
+    ] as const
+
+    const encodedArgs = encodeAbiParameters(
+      [{ type: 'address' }, { type: 'uint256' }, { type: 'bytes' }],
+      args
+    )
+
+    const group = new Group([identity1.commitment])
+    const scope = await cabal.read.getMerkleTreeRoot() // Merkle root of the group
+    const message = BigInt(keccak256(encodedArgs)) // Hashed calldata
+    const proof = await generateProof(identity1, group, message, scope)
+
+    const treeRootBefore = await cabal.read.getMerkleTreeRoot()
+
+    const addMemberTx = cabal.write.addMember(
+      [
+        identity2.commitment, // commitment of new member
+        formatProof(proof), // proof of membership from the existing member
+      ],
+      { account: account1 }
+    )
+
+    await expect(addMemberTx).to.be.fulfilled
+
+    // Tree root should change whenever a new member is added
+    const treeRootAfter = await cabal.read.getMerkleTreeRoot()
+    expect(treeRootAfter).to.not.equal(treeRootBefore)
   })
 })

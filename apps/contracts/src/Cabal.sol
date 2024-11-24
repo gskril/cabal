@@ -26,7 +26,7 @@ contract Cabal {
     string public constant name = "Cabal";
 
     /// @dev https://docs.semaphore.pse.dev/deployed-contracts
-    ISemaphore constant semaphore = ISemaphore(0x1e0d7FF1610e480fC93BdEC510811ea2Ba6d7c2f);
+    ISemaphore public constant semaphore = ISemaphore(0x1e0d7FF1610e480fC93BdEC510811ea2Ba6d7c2f);
 
     /// @notice The Semaphore group ID for the account.
     uint256 public immutable semaphoreGroupId;
@@ -71,6 +71,7 @@ contract Cabal {
     constructor(uint256 _identityCommitment) {
         semaphoreGroupId = semaphore.createGroup();
         semaphore.addMember(semaphoreGroupId, _identityCommitment);
+        emit MemberAdded(_identityCommitment);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -121,6 +122,16 @@ contract Cabal {
     /// @notice Returns the Merkle tree root of the group.
     function getMerkleTreeRoot() external view returns (uint256) {
         return semaphore.getMerkleTreeRoot(semaphoreGroupId);
+    }
+
+    /// @notice Returns the depth of the Merkle tree of the group.
+    function getMerkleTreeDepth() external view returns (uint256) {
+        return semaphore.getMerkleTreeDepth(semaphoreGroupId);
+    }
+
+    /// @notice Returns the number of leaves in the Merkle tree of the group.
+    function getMerkleTreeSize() external view returns (uint256) {
+        return semaphore.getMerkleTreeSize(semaphoreGroupId);
     }
 
     /*//////////////////////////////////////////////////////////////
