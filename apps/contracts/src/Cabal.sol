@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
-import {ISemaphore} from "@semaphore-protocol/contracts/interfaces/ISemaphore.sol";
+import {ISemaphore} from "./ISemaphore.sol";
 
 ///////////////////////////////////////////////////////////////////////
 //                                                                   //
@@ -45,7 +45,6 @@ contract Cabal {
 
     event Received(address indexed sender, uint256 indexed value);
     event MemberAdded(uint256 indexed identityCommitment);
-    event MemberRemoved(uint256 indexed identityCommitment);
     event ExecutionSuccess(uint256 indexed value);
     event ExecutionFailure();
 
@@ -53,7 +52,6 @@ contract Cabal {
                                  ERRORS
     //////////////////////////////////////////////////////////////*/
 
-    error ExecutionFailed();
     error InvalidProof();
     error InvalidIntent();
 
@@ -82,6 +80,7 @@ contract Cabal {
         bytes4 selector = semaphore.addMember.selector;
         bytes memory data = abi.encodeWithSelector(selector, semaphoreGroupId, identityCommitment);
         execute(address(semaphore), 0, data, proof);
+        emit MemberAdded(identityCommitment);
     }
 
     /// @notice Executes a call to an arbitrary contract.
@@ -91,7 +90,10 @@ contract Cabal {
         virtual
     {
         // Check if the Semaphore proof is valid and hasn't already been used
-        semaphore.validateProof(semaphoreGroupId, proof);
+        try semaphore.validateProof(semaphoreGroupId, proof) {}
+        catch {
+            revert InvalidProof();
+        }
 
         // Check if the calldata matches `proof.message` so relayers can't execute arbitrary calls
         bytes32 intentHash = keccak256(abi.encode(to, value, data));
@@ -110,5 +112,10 @@ contract Cabal {
     /// @notice Checks if a Semaphore proof is valid.
     function isValidProof(ISemaphore.SemaphoreProof calldata proof) external view returns (bool) {
         return semaphore.verifyProof(semaphoreGroupId, proof);
+    }
+
+    /// @notice Returns the Merkle tree root of the group.
+    function getMerkleTreeRoot() external view returns (uint256) {
+        return semaphore.getMerkleTreeRoot(semaphoreGroupId);
     }
 }
