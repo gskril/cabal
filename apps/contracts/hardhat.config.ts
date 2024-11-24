@@ -11,6 +11,12 @@ if (!BASESCAN_API_KEY) throw new Error('BASESCAN_API_KEY must be set')
 
 const config: HardhatUserConfig = {
   networks: {
+    hardhat: {
+      forking: {
+        enabled: true,
+        url: 'https://sepolia.drpc.org',
+      },
+    },
     base: {
       url: 'https://mainnet.base.org',
       accounts: [DEPLOYER_KEY],

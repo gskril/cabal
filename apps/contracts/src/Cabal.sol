@@ -27,7 +27,7 @@ contract Cabal {
     //////////////////////////////////////////////////////////////*/
 
     /// @notice The name of the contract.
-    string public name;
+    string public constant name = "Cabal";
 
     /// @dev https://docs.semaphore.pse.dev/deployed-contracts
     ISemaphore constant semaphore = ISemaphore(0x1e0d7FF1610e480fC93BdEC510811ea2Ba6d7c2f);
