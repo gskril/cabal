@@ -16,7 +16,7 @@ import {ISemaphore} from "./ISemaphore.sol";
 ///////////////////////////////////////////////////////////////////////
 
 /// @notice A shared, anonymous, invite-only smart contract account.
-/// @dev Effectively a 1/n multi-sig wallet that can call arbitrary functions, sign ERC-1271 messages, etc.
+/// @dev Effectively a 1/n multi-sig wallet that can call arbitrary smart contract functions.
 contract Cabal {
     /*//////////////////////////////////////////////////////////////
                                PARAMETERS
