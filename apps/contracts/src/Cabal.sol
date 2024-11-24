@@ -31,11 +31,7 @@ contract Cabal {
     /// @notice The Semaphore group ID for the account.
     uint256 public immutable semaphoreGroupId;
 
-    /// @notice The token that relayer fees are paid in.
-    /// @dev address(0) for ETH, otherwise an ERC-20 token address. Defaults to ETH.
-    address public feeToken;
-
-    /// @notice The amount of {feeToken} that is paid to a relayer for executing a transaction.
+    /// @notice The amount of ETH paid to a relayer for executing a transaction.
     /// @dev Defaults to 0.
     uint256 public feeAmount;
 
@@ -45,12 +41,16 @@ contract Cabal {
 
     event Received(address indexed sender, uint256 indexed value);
     event MemberAdded(uint256 indexed identityCommitment);
-    event ExecutionSuccess(uint256 indexed value);
+    event FeeChanged(uint256 indexed amount);
+    event ExecutionSuccess(uint256 indexed value, uint256 indexed fee);
     event ExecutionFailure();
 
     /*//////////////////////////////////////////////////////////////
                                  ERRORS
     //////////////////////////////////////////////////////////////*/
+
+    error FailedToSendFee();
+    error InsufficientBalance();
 
     // For some reason, reverting with the error from ISemaphoreBase doesn't work
     // So we have to manually redefine them here
@@ -78,25 +78,55 @@ contract Cabal {
                             PUBLIC FUNCTIONS
     //////////////////////////////////////////////////////////////*/
 
+    /// @dev For receiving ETH.
     receive() external payable {
         emit Received(msg.sender, msg.value);
     }
 
-    /// @dev This is the equivalent of calling `semaphore.addMember(semaphoreGroupId, identityCommitment);`
-    /// @dev Uses `execute()` for consistency, even though a custom `proof.message` would be simpler.
+    /// @notice Adds a member to the Semaphore group.
     function addMember(uint256 identityCommitment, ISemaphore.SemaphoreProof calldata proof) external {
-        bytes4 selector = semaphore.addMember.selector;
-        bytes memory data = abi.encodeWithSelector(selector, semaphoreGroupId, identityCommitment);
-        execute(address(semaphore), 0, data, proof);
+        // Check if the Semaphore proof is valid and hasn't already been used
+        _validateProof(proof);
+
+        // Check if the identityCommitment matches `proof.message` so relayers can't modify it
+        if (proof.message != identityCommitment) revert InvalidIntent();
+
+        // Add the member
+        semaphore.addMember(semaphoreGroupId, identityCommitment);
         emit MemberAdded(identityCommitment);
+    }
+
+    /// @notice Sets the fee amount.
+    function setFee(uint256 amount, ISemaphore.SemaphoreProof calldata proof) external {
+        // Check if the Semaphore proof is valid and hasn't already been used
+        _validateProof(proof);
+
+        // Check if the amount matches `proof.message` so relayers can't modify it
+        if (proof.message != amount) revert InvalidIntent();
+
+        // Update the storage variable
+        feeAmount = amount;
+        emit FeeChanged(amount);
     }
 
     /// @notice Executes a call to an arbitrary contract.
     /// @dev Protected by a Semaphore proof, but can be called by anyone (e.g. relayers to preserve privacy).
-    function execute(address to, uint256 value, bytes memory data, ISemaphore.SemaphoreProof calldata proof)
-        public
-        virtual
-    {
+    function execute(address to, uint256 value, bytes memory data, ISemaphore.SemaphoreProof calldata proof) external {
+        execute(to, value, data, proof, true);
+    }
+
+    /// @notice Executes a call to an arbitrary contract.
+    /// @dev Protected by a Semaphore proof, but can be called by anyone (e.g. relayers to preserve privacy).
+    function execute(
+        address to,
+        uint256 value,
+        bytes memory data,
+        ISemaphore.SemaphoreProof calldata proof,
+        bool takeFee
+    ) public {
+        // Check if the contract has a sufficient balance
+        if (address(this).balance < value + feeAmount) revert InsufficientBalance();
+
         // Check if the Semaphore proof is valid and hasn't already been used
         _validateProof(proof);
 
@@ -106,8 +136,12 @@ contract Cabal {
 
         // Execute the intended call
         (bool success,) = to.call{value: value}(data);
-        if (success) emit ExecutionSuccess(value);
-        else emit ExecutionFailure();
+        if (!success) {
+            emit ExecutionFailure();
+        } else {
+            (uint256 fee) = _handleFee(takeFee);
+            emit ExecutionSuccess(value, fee);
+        }
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -153,5 +187,14 @@ contract Cabal {
             else if (reason == 0x208b15e8) revert YouAreUsingTheSameNullifierTwice();
             else revert InvalidProof();
         }
+    }
+
+    /// @notice Handles the fee for the relayer of a private transaction.
+    /// @dev Reverts if the fee cannot be sent.
+    function _handleFee(bool enabled) internal returns (uint256) {
+        if (!enabled || feeAmount == 0) return 0;
+        (bool success,) = payable(msg.sender).call{value: feeAmount}("");
+        if (!success) revert FailedToSendFee();
+        return feeAmount;
     }
 }

@@ -32,6 +32,13 @@ const deploy = async () => {
     identity1.commitment, // _identityCommitment
   ])
 
+  // Load up the contract with some ether
+  const [walletClient] = await hre.viem.getWalletClients()
+  await walletClient.sendTransaction({
+    to: cabal.address,
+    value: BigInt(2000),
+  })
+
   return { cabal }
 }
 
@@ -76,28 +83,9 @@ describe('Positive tests', function () {
   it('should let a member add new members', async function () {
     const { cabal } = await loadFixture(deploy)
 
-    const abiEncodedCalldata = encodeFunctionData({
-      abi: parseAbi([
-        'function addMember(uint256 groupId, uint256 identityCommitment)',
-      ]),
-      functionName: 'addMember',
-      args: [await cabal.read.semaphoreGroupId(), identity2.commitment],
-    })
-
-    const args = [
-      await cabal.read.semaphore(), // to
-      0n, // value
-      abiEncodedCalldata, // data
-    ] as const
-
-    const encodedArgs = encodeAbiParameters(
-      [{ type: 'address' }, { type: 'uint256' }, { type: 'bytes' }],
-      args
-    )
-
     const group = new Group([identity1.commitment])
     const scope = await cabal.read.getMerkleTreeRoot() // Merkle root of the group
-    const message = BigInt(keccak256(encodedArgs)) // Hashed calldata
+    const message = identity2.commitment // Hashed calldata
     const proof = await generateProof(identity1, group, message, scope)
 
     const treeRootBefore = await cabal.read.getMerkleTreeRoot()
@@ -115,6 +103,25 @@ describe('Positive tests', function () {
     // Tree root should change whenever a new member is added
     const treeRootAfter = await cabal.read.getMerkleTreeRoot()
     expect(treeRootAfter).to.not.equal(treeRootBefore)
+  })
+
+  it('should let a member update the fee', async function () {
+    const { cabal } = await loadFixture(deploy)
+
+    const group = new Group([identity1.commitment])
+    const scope = await cabal.read.getMerkleTreeRoot() // Merkle root of the group
+    const message = BigInt(1000)
+    const proof = await generateProof(identity1, group, message, scope)
+
+    const updateFeeTx = cabal.write.setFee(
+      [
+        BigInt(1000), // amount
+        formatProof(proof), // proof of membership from the existing member
+      ],
+      { account: account2 }
+    )
+
+    await expect(updateFeeTx).to.be.fulfilled
   })
 })
 
@@ -209,5 +216,54 @@ describe('Negative tests', function () {
     )
 
     await expect(sendEtherTx).to.be.rejectedWith('InvalidIntent()')
+  })
+
+  it('should not let a relayer set a random fee', async function () {
+    const { cabal } = await loadFixture(deploy)
+
+    const group = new Group([identity1.commitment])
+    const scope = await cabal.read.getMerkleTreeRoot() // Merkle root of the group
+    const message = BigInt(1000)
+    const proof = await generateProof(identity1, group, message, scope)
+
+    const updateFeeTx = cabal.write.setFee(
+      [
+        BigInt(69), // amount
+        formatProof(proof), // proof of membership from the existing member
+      ],
+      { account: account2 }
+    )
+
+    await expect(updateFeeTx).to.be.rejectedWith('InvalidIntent()')
+  })
+
+  it('should revert when there is not enough ether', async function () {
+    const { cabal } = await loadFixture(deploy)
+
+    const args = [
+      account2, // to
+      BigInt(1000000), // value
+      '0x', // data
+    ] as const
+
+    const abiEncodedCalldata = encodeAbiParameters(
+      [{ type: 'address' }, { type: 'uint256' }, { type: 'bytes' }],
+      args
+    )
+
+    const group = new Group([identity1.commitment])
+    const scope = await cabal.read.getMerkleTreeRoot() // Merkle root of the group
+    const message = BigInt(keccak256(abiEncodedCalldata)) // Hashed calldata
+    const proof = await generateProof(identity1, group, message, scope)
+
+    const sendEtherTx = cabal.write.execute(
+      [
+        ...args,
+        formatProof(proof), // proof of membership from the sender
+      ],
+      { account: account1 }
+    )
+
+    await expect(sendEtherTx).to.be.rejectedWith('InsufficientBalance()')
   })
 })
