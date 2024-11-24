@@ -15,6 +15,7 @@ const config: HardhatUserConfig = {
       forking: {
         enabled: true,
         url: 'https://sepolia.drpc.org',
+        blockNumber: 7140000,
       },
     },
     base: {
