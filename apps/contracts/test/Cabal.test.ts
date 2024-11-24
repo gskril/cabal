@@ -4,12 +4,7 @@ import { Identity } from '@semaphore-protocol/identity'
 import { generateProof } from '@semaphore-protocol/proof'
 import { expect } from 'chai'
 import hre from 'hardhat'
-import {
-  encodeAbiParameters,
-  encodeFunctionData,
-  keccak256,
-  parseAbi,
-} from 'viem'
+import { encodeAbiParameters, keccak256 } from 'viem'
 
 import { formatProof } from './utils'
 
