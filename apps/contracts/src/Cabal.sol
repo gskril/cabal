@@ -6,9 +6,21 @@ import {IERC1155} from "@openzeppelin/contracts/interfaces/IERC1155.sol";
 import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 import {MessageHashUtils} from "@openzeppelin/contracts/utils/cryptography/MessageHashUtils.sol";
 
+///////////////////////////////////////////////////////////////////////
+//                                                                   //
+//      .g8"""bgd     db      `7MM"""Yp,      db      `7MMF'         //
+//    .dP'     `M    ;MM:       MM    Yb     ;MM:       MM           //
+//    dM'       `   ,V^MM.      MM    dP    ,V^MM.      MM           //
+//    MM           ,M  `MM      MM"""bg.   ,M  `MM      MM           //
+//    MM.          AbmmmqMA     MM    `Y   AbmmmqMA     MM      ,    //
+//    `Mb.     ,' A'     VML    MM    ,9  A'     VML    MM     ,M    //
+//      `"bmmmd'.AMA.   .AMMA..JMMmmmd9 .AMA.   .AMMA..JMMmmmmMMM    //
+//                                                                   //
+///////////////////////////////////////////////////////////////////////
+
 /// @notice A shared smart contract account that can be used by multiple users.
 /// @dev This is effectively a 1/n multisig wallet that can call arbitrary functions on any smart contract, sign messages, etc.
-contract Account {
+contract Cabal {
     /*//////////////////////////////////////////////////////////////
                                 STRUCTS
     //////////////////////////////////////////////////////////////*/
