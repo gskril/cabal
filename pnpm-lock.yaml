@@ -23,9 +23,6 @@ importers:
 
   apps/contracts:
     dependencies:
-      '@openzeppelin/contracts':
-        specifier: ^5.0.2
-        version: 5.0.2
       '@semaphore-protocol/contracts':
         specifier: ^4.5.0
         version: 4.5.0
@@ -38,12 +35,6 @@ importers:
       '@semaphore-protocol/proof':
         specifier: ^4.5.0
         version: 4.5.0(@semaphore-protocol/group@4.5.0)(@semaphore-protocol/identity@4.5.0)(bufferutil@4.0.8)(utf-8-validate@5.0.10)
-      '@zk-kit/lean-imt.sol':
-        specifier: ^2.0.0
-        version: 2.0.0
-      poseidon-solidity:
-        specifier: ^0.0.5
-        version: 0.0.5
     devDependencies:
       '@nomicfoundation/hardhat-network-helpers':
         specifier: ^1.0.10
@@ -1479,9 +1470,6 @@ packages:
   '@nomicfoundation/solidity-analyzer@0.1.2':
     resolution: {integrity: sha512-q4n32/FNKIhQ3zQGGw5CvPF6GTvDCpYwIf7bEY/dZTZbgfDsHyjJwURxUJf3VQuuJj+fDIFl4+KkBVbw4Ef6jA==}
     engines: {node: '>= 12'}
-
-  '@openzeppelin/contracts@5.0.2':
-    resolution: {integrity: sha512-ytPc6eLGcHHnapAZ9S+5qsdomhjo6QBHTDRRBFfTxXIpsicMhVPouPgmUPebZZZGX7vt9USA+Z+0M0dSVtSUEA==}
 
   '@parcel/watcher-android-arm64@2.4.1':
     resolution: {integrity: sha512-LOi/WTbbh3aTn2RYddrO8pnapixAziFl6SMxHM69r3tvdSm94JtCenaKgk1GRg5FJ5wpMCpHeW+7yqPlvZv7kg==}
@@ -8221,8 +8209,6 @@ snapshots:
       '@nomicfoundation/solidity-analyzer-linux-x64-gnu': 0.1.2
       '@nomicfoundation/solidity-analyzer-linux-x64-musl': 0.1.2
       '@nomicfoundation/solidity-analyzer-win32-x64-msvc': 0.1.2
-
-  '@openzeppelin/contracts@5.0.2': {}
 
   '@parcel/watcher-android-arm64@2.4.1':
     optional: true
