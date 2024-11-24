@@ -35,7 +35,7 @@ const deploy = async () => {
   return { cabal }
 }
 
-describe('Tests', function () {
+describe('Positive tests', function () {
   it('should return the contract name', async function () {
     const { cabal } = await loadFixture(deploy)
 
@@ -71,98 +71,6 @@ describe('Tests', function () {
     )
 
     await expect(sendEtherTx).to.be.fulfilled
-  })
-
-  it('should not let the same proof be used twice', async function () {
-    const { cabal } = await loadFixture(deploy)
-
-    const args = [
-      account2, // to
-      BigInt(1000), // value
-      '0x', // data
-    ] as const
-
-    const abiEncodedCalldata = encodeAbiParameters(
-      [{ type: 'address' }, { type: 'uint256' }, { type: 'bytes' }],
-      args
-    )
-
-    const group = new Group([identity1.commitment])
-    const scope = await cabal.read.getMerkleTreeRoot() // Merkle root of the group
-    const message = BigInt(keccak256(abiEncodedCalldata)) // Hashed calldata
-    const proof = await generateProof(identity1, group, message, scope)
-
-    const sendEtherTx1 = cabal.write.execute(
-      [
-        ...args,
-        formatProof(proof), // proof of membership from the sender
-      ],
-      { account: account1 }
-    )
-
-    const sendEtherTx2 = cabal.write.execute(
-      [
-        ...args,
-        formatProof(proof), // proof of membership from the sender
-      ],
-      { account: account1 }
-    )
-
-    await expect(sendEtherTx1).to.be.fulfilled
-    await expect(sendEtherTx2).to.be.rejectedWith(
-      'YouAreUsingTheSameNullifierTwice()'
-    )
-  })
-
-  it('should reject invalid proofs', async function () {
-    const { cabal } = await loadFixture(deploy)
-
-    const args = [
-      account2, // to
-      BigInt(1000), // value
-      '0x', // data
-    ] as const
-
-    const abiEncodedCalldata = encodeAbiParameters(
-      [{ type: 'address' }, { type: 'uint256' }, { type: 'bytes' }],
-      args
-    )
-
-    const group = new Group([identity1.commitment])
-    const scope = await cabal.read.getMerkleTreeRoot() // Merkle root of the group
-    const message = BigInt(keccak256(abiEncodedCalldata)) // Hashed calldata
-    const proof = await generateProof(identity1, group, message, scope)
-
-    const sendEtherTx = cabal.write.execute(
-      [
-        ...args,
-        { ...formatProof(proof), merkleTreeDepth: 2n }, // proof of membership from the sender
-      ],
-      { account: account1 }
-    )
-
-    await expect(sendEtherTx).to.be.rejectedWith('InvalidProof()')
-  })
-
-  it('should not let relayers execute unsigned calls', async function () {
-    const { cabal } = await loadFixture(deploy)
-
-    const group = new Group([identity1.commitment])
-    const scope = await cabal.read.getMerkleTreeRoot() // Merkle root of the group
-    const message = 1 // Hashed calldata
-    const proof = await generateProof(identity1, group, message, scope)
-
-    const sendEtherTx = cabal.write.execute(
-      [
-        account2, // to
-        BigInt(1000), // value
-        '0x', // data
-        formatProof(proof), // proof of membership from the sender
-      ],
-      { account: account1 }
-    )
-
-    await expect(sendEtherTx).to.be.rejectedWith('InvalidIntent()')
   })
 
   it('should let a member add new members', async function () {
@@ -207,5 +115,99 @@ describe('Tests', function () {
     // Tree root should change whenever a new member is added
     const treeRootAfter = await cabal.read.getMerkleTreeRoot()
     expect(treeRootAfter).to.not.equal(treeRootBefore)
+  })
+})
+
+describe('Negative tests', function () {
+  it('should reject invalid proofs', async function () {
+    const { cabal } = await loadFixture(deploy)
+
+    const args = [
+      account2, // to
+      BigInt(1000), // value
+      '0x', // data
+    ] as const
+
+    const abiEncodedCalldata = encodeAbiParameters(
+      [{ type: 'address' }, { type: 'uint256' }, { type: 'bytes' }],
+      args
+    )
+
+    const group = new Group([identity1.commitment])
+    const scope = await cabal.read.getMerkleTreeRoot() // Merkle root of the group
+    const message = BigInt(keccak256(abiEncodedCalldata)) // Hashed calldata
+    const proof = await generateProof(identity1, group, message, scope)
+
+    const sendEtherTx = cabal.write.execute(
+      [
+        ...args,
+        { ...formatProof(proof), merkleTreeDepth: 2n }, // proof of membership from the sender
+      ],
+      { account: account1 }
+    )
+
+    await expect(sendEtherTx).to.be.rejectedWith('InvalidProof()')
+  })
+
+  it('should not let the same proof be used twice', async function () {
+    const { cabal } = await loadFixture(deploy)
+
+    const args = [
+      account2, // to
+      BigInt(1000), // value
+      '0x', // data
+    ] as const
+
+    const abiEncodedCalldata = encodeAbiParameters(
+      [{ type: 'address' }, { type: 'uint256' }, { type: 'bytes' }],
+      args
+    )
+
+    const group = new Group([identity1.commitment])
+    const scope = await cabal.read.getMerkleTreeRoot() // Merkle root of the group
+    const message = BigInt(keccak256(abiEncodedCalldata)) // Hashed calldata
+    const proof = await generateProof(identity1, group, message, scope)
+
+    const sendEtherTx1 = cabal.write.execute(
+      [
+        ...args,
+        formatProof(proof), // proof of membership from the sender
+      ],
+      { account: account1 }
+    )
+
+    const sendEtherTx2 = cabal.write.execute(
+      [
+        ...args,
+        formatProof(proof), // proof of membership from the sender
+      ],
+      { account: account1 }
+    )
+
+    await expect(sendEtherTx1).to.be.fulfilled
+    await expect(sendEtherTx2).to.be.rejectedWith(
+      'YouAreUsingTheSameNullifierTwice()'
+    )
+  })
+
+  it('should not let relayers execute unsigned calls', async function () {
+    const { cabal } = await loadFixture(deploy)
+
+    const group = new Group([identity1.commitment])
+    const scope = await cabal.read.getMerkleTreeRoot() // Merkle root of the group
+    const message = 1 // Hashed calldata
+    const proof = await generateProof(identity1, group, message, scope)
+
+    const sendEtherTx = cabal.write.execute(
+      [
+        account2, // to
+        BigInt(1000), // value
+        '0x', // data
+        formatProof(proof), // proof of membership from the sender
+      ],
+      { account: account1 }
+    )
+
+    await expect(sendEtherTx).to.be.rejectedWith('InvalidIntent()')
   })
 })
