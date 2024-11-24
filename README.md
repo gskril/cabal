@@ -1,3 +1,5 @@
-# Web3 Monorepo Template
+# Cabal
 
-This is an opinionated monorepo template for web3 projects. It uses Hardhat for [smart contracts](./apps/contracts/README.md) and Next.js for the [web app](./apps/web/README.md).
+A shared, anonymous, invite-only smart contract wallet powered by [Semaphore](https://docs.semaphore.pse.dev/).
+
+See [contracts](./apps/contracts/README.md) for more details.
