@@ -52,6 +52,13 @@ contract Cabal {
                                  ERRORS
     //////////////////////////////////////////////////////////////*/
 
+    // For some reason, reverting with the error from ISemaphoreBase doesn't work
+    // So we have to manually redefine them here
+    error GroupHasNoMembers();
+    error MerkleTreeDepthIsNotSupported();
+    error MerkleTreeRootIsExpired();
+    error MerkleTreeRootIsNotPartOfTheGroup();
+    error YouAreUsingTheSameNullifierTwice();
     error InvalidProof();
     error InvalidIntent();
 
@@ -90,10 +97,7 @@ contract Cabal {
         virtual
     {
         // Check if the Semaphore proof is valid and hasn't already been used
-        try semaphore.validateProof(semaphoreGroupId, proof) {}
-        catch {
-            revert InvalidProof();
-        }
+        _validateProof(proof);
 
         // Check if the calldata matches `proof.message` so relayers can't execute arbitrary calls
         bytes32 intentHash = keccak256(abi.encode(to, value, data));
@@ -117,5 +121,26 @@ contract Cabal {
     /// @notice Returns the Merkle tree root of the group.
     function getMerkleTreeRoot() external view returns (uint256) {
         return semaphore.getMerkleTreeRoot(semaphoreGroupId);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                           INTERNAL FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+
+    /// @notice Validates a Semaphore proof.
+    /// @dev Reverts with the appropriate Semaphore error if the proof is invalid.
+    function _validateProof(ISemaphore.SemaphoreProof calldata proof) internal {
+        try semaphore.validateProof(semaphoreGroupId, proof) {}
+        catch (bytes memory _reason) {
+            bytes4 reason = bytes4(_reason);
+
+            // Revert with the appropriate error
+            if (reason == 0xc8b02e01) revert GroupHasNoMembers();
+            else if (reason == 0xecf64f12) revert MerkleTreeDepthIsNotSupported();
+            else if (reason == 0x9581a990) revert MerkleTreeRootIsExpired();
+            else if (reason == 0x4d329586) revert MerkleTreeRootIsNotPartOfTheGroup();
+            else if (reason == 0x208b15e8) revert YouAreUsingTheSameNullifierTwice();
+            else revert InvalidProof();
+        }
     }
 }
