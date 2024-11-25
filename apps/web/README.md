@@ -1,6 +1,9 @@
 # Web
 
-Next.js project for building a web app. Comes with [Wagmi](https://wagmi.sh/), [RainbowKit](https://www.rainbowkit.com/) and [Tailwind](https://tailwindcss.com/) already configured.
+> [!NOTE]  
+> This was forked from [@stephancill/share-tx](https://github.com/stephancill/share-tx).
+
+Web app for Cabal. Provides an interface for signing transactions and viewing group activity.
 
 ## Local Development
 
