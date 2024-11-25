@@ -1,12 +1,11 @@
 'use client'
 
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import { Copy, Eye, Loader2, Search } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   type AbiFunction,
   Address,
-  decodeFunctionData,
   encodeFunctionData,
   isAddress,
   toFunctionSelector,
@@ -197,57 +196,6 @@ export default function Page() {
     setSelectedFunctionSelector(null)
     setInputs([])
   }, [contractAddress])
-
-  const { data: txList, isLoading: isLoadingTxList } = useQuery({
-    queryKey: ['transactions', selectedChain?.id, contractAddress],
-    queryFn: async () => {
-      if (!selectedChain?.id || !contractAddress) return null
-      const response = await fetch(
-        `/api/etherscan?chainid=${selectedChain.id}&module=account&action=txlist&address=${contractAddress}&sort=desc&limit=100`
-      )
-      const data = await response.json()
-      return data.result
-    },
-    enabled: isAddress(contractAddress) && !!selectedChain,
-  })
-
-  const filteredTransactions = useMemo(() => {
-    if (!txList) return []
-    return txList
-      .filter((tx: any) => {
-        if (!selectedFunctionSelector) return true
-        if (!functions.length) return false
-        const selectedFunc = functions.find(
-          (f) => toFunctionSelector(f) === selectedFunctionSelector
-        )
-        if (selectedFunc?.stateMutability === 'view') return true
-        return tx.methodId === selectedFunctionSelector.slice(0, 10)
-      })
-      .slice(0, 50)
-  }, [txList, selectedFunctionSelector, functions])
-
-  const handleTransactionClick = useCallback(
-    (tx: any) => {
-      const f = functions.find((f) => toFunctionSelector(f) === tx.methodId)
-      if (!f) return
-
-      setSelectedFunctionSelector(toFunctionSelector(f))
-      try {
-        const decoded = decodeFunctionData({
-          abi: [f],
-          data: tx.input,
-        })
-        setInputs(decoded.args.map((v: any) => v.toString()))
-
-        if (f.stateMutability === 'payable' && tx.value !== '0') {
-          setValueInput(tx.value)
-        }
-      } catch (error) {
-        console.error('Error decoding transaction data:', error)
-      }
-    },
-    [functions]
-  )
 
   const scaleInput = (index: number, value: string, magnitude: number) => {
     try {
