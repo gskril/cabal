@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.23;
 
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {ISemaphore} from "./ISemaphore.sol";
 
 ///////////////////////////////////////////////////////////////////////
@@ -17,7 +18,7 @@ import {ISemaphore} from "./ISemaphore.sol";
 
 /// @notice A shared, anonymous, invite-only smart contract account.
 /// @dev Effectively a 1/n multi-sig wallet that can call arbitrary smart contract functions.
-contract Cabal {
+contract Cabal is Initializable {
     /*//////////////////////////////////////////////////////////////
                                PARAMETERS
     //////////////////////////////////////////////////////////////*/
@@ -26,13 +27,13 @@ contract Cabal {
     string public constant name = "Cabal";
 
     /// @notice The ID of the chain this contract is on.
-    uint256 public immutable chainId;
+    uint256 public chainId;
 
     /// @dev https://docs.semaphore.pse.dev/deployed-contracts
     ISemaphore public constant semaphore = ISemaphore(0x1e0d7FF1610e480fC93BdEC510811ea2Ba6d7c2f);
 
     /// @notice The Semaphore group ID for the account.
-    uint256 public immutable semaphoreGroupId;
+    uint256 public semaphoreGroupId;
 
     /// @notice The amount of ETH paid to a relayer for executing a transaction.
     /// @dev Defaults to 0.
@@ -69,9 +70,13 @@ contract Cabal {
                               CONSTRUCTOR
     //////////////////////////////////////////////////////////////*/
 
+    constructor() {
+        _disableInitializers();
+    }
+
     /// @notice Initializes the multisig account.
     /// @param _identityCommitment The identity commitment of the first member of the group.
-    constructor(uint256 _identityCommitment) {
+    function initialize(uint256 _identityCommitment) external initializer {
         semaphoreGroupId = semaphore.createGroup();
         semaphore.addMember(semaphoreGroupId, _identityCommitment);
         emit MemberAdded(_identityCommitment);
