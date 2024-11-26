@@ -1,0 +1,13 @@
+{
+  "name": "relayer",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "start": "tsc && node ./dist/index.js",
+    "prettier": "prettier --write ."
+  },
+  "dependencies": {
+    "elysia": "^1.1.25"
+  }
+}
