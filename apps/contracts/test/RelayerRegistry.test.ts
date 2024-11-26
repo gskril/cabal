@@ -4,11 +4,10 @@ import { expect } from 'chai'
 import hre from 'hardhat'
 
 const SEVEN_DAYS = 7 * 24 * 60 * 60 // 7 days in seconds
-const NULL_ADDRESS = '0x0000000000000000000000000000000000000000'
 
 const deploy = async () => {
   const relayerRegistry = await hre.viem.deployContract('RelayerRegistry', [
-    NULL_ADDRESS,
+    '0x0000000000000000000000000000000000000000', // _cabal
   ])
 
   return { relayerRegistry }
