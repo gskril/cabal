@@ -25,6 +25,9 @@ contract Cabal {
     /// @notice The name of the contract.
     string public constant name = "Cabal";
 
+    /// @notice The ID of the chain this contract is on.
+    uint256 public immutable chainId;
+
     /// @dev https://docs.semaphore.pse.dev/deployed-contracts
     ISemaphore public constant semaphore = ISemaphore(0x1e0d7FF1610e480fC93BdEC510811ea2Ba6d7c2f);
 
@@ -72,6 +75,12 @@ contract Cabal {
         semaphoreGroupId = semaphore.createGroup();
         semaphore.addMember(semaphoreGroupId, _identityCommitment);
         emit MemberAdded(_identityCommitment);
+        uint256 _chainId;
+
+        assembly {
+            _chainId := chainid()
+        }
+        chainId = _chainId;
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -131,7 +140,7 @@ contract Cabal {
         _validateProof(proof);
 
         // Check if the calldata matches `proof.message` so relayers can't execute arbitrary calls
-        bytes32 intentHash = keccak256(abi.encode(to, value, data));
+        bytes32 intentHash = keccak256(abi.encode(to, value, data, chainId));
         if (proof.message != uint256(intentHash)) revert InvalidIntent();
 
         // Execute the intended call

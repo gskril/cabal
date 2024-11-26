@@ -5,6 +5,7 @@ import { generateProof } from '@semaphore-protocol/proof'
 import { expect } from 'chai'
 import hre from 'hardhat'
 import { encodeAbiParameters, keccak256 } from 'viem'
+import { hardhat } from 'viem/chains'
 
 import { formatProof } from './utils'
 
@@ -46,18 +47,28 @@ describe('Cabal', function () {
       expect(contractName).to.equal('Cabal')
     })
 
+    it('should return the correct chain id', async function () {
+      const { cabal } = await loadFixture(deploy)
+      const chainId = await cabal.read.chainId()
+      expect(chainId).to.equal(BigInt(hardhat.id))
+    })
+
     it('should let relayers execute signed calls', async function () {
       const { cabal } = await loadFixture(deploy)
 
-      const args = [
-        account2, // to
-        BigInt(1000), // value
-        '0x', // data
-      ] as const
-
       const abiEncodedCalldata = encodeAbiParameters(
-        [{ type: 'address' }, { type: 'uint256' }, { type: 'bytes' }],
-        args
+        [
+          { type: 'address' },
+          { type: 'uint256' },
+          { type: 'bytes' },
+          { type: 'uint256' },
+        ],
+        [
+          account2, // to
+          BigInt(1000), // value
+          '0x', // data
+          BigInt(hardhat.id), // chainId
+        ]
       )
 
       const group = new Group([identity1.commitment])
@@ -67,7 +78,9 @@ describe('Cabal', function () {
 
       const sendEtherTx = cabal.write.execute(
         [
-          ...args,
+          account2, // to
+          BigInt(1000), // value
+          '0x', // data
           formatProof(proof), // proof of membership from the sender
         ],
         { account: account1 }
@@ -155,21 +168,31 @@ describe('Cabal', function () {
     it('should not let the same proof be used twice', async function () {
       const { cabal } = await loadFixture(deploy)
 
-      const args = [
-        account2, // to
-        BigInt(1000), // value
-        '0x', // data
-      ] as const
-
       const abiEncodedCalldata = encodeAbiParameters(
-        [{ type: 'address' }, { type: 'uint256' }, { type: 'bytes' }],
-        args
+        [
+          { type: 'address' },
+          { type: 'uint256' },
+          { type: 'bytes' },
+          { type: 'uint256' },
+        ],
+        [
+          account2, // to
+          BigInt(1000), // value
+          '0x', // data
+          BigInt(hardhat.id), // chainId
+        ]
       )
 
       const group = new Group([identity1.commitment])
       const scope = await cabal.read.getMerkleTreeRoot() // Merkle root of the group
       const message = BigInt(keccak256(abiEncodedCalldata)) // Hashed calldata
       const proof = await generateProof(identity1, group, message, scope)
+
+      const args = [
+        account2, // to
+        BigInt(1000), // value
+        '0x', // data
+      ] as const
 
       const sendEtherTx1 = cabal.write.execute(
         [
