@@ -8,6 +8,8 @@
     "prettier": "prettier --write ."
   },
   "dependencies": {
-    "elysia": "^1.1.25"
+    "@hono/node-server": "^1.13.7",
+    "hono": "^4.6.12",
+    "zod": "^3.23.8"
   }
 }
