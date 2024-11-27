@@ -26,12 +26,19 @@ import { z } from 'zod'
 }
 */
 
-export const relaySchema = z.object({
-  to: z.coerce.bigint(),
-  value: z.coerce.bigint(),
-  data: z.string().startsWith('0x'),
-  chainId: z.coerce.bigint(),
-  proof: z.coerce.bigint().array().length(8),
-})
+const bigintRegex = z.string().regex(/^[0-9]+$/)
 
-export type RelaySchema = z.infer<typeof relaySchema>
+export const txSchema = z.object({
+  to: z.string().startsWith('0x'),
+  value: bigintRegex,
+  data: z.string().startsWith('0x'),
+  chainId: bigintRegex,
+  proof: z.object({
+    merkleTreeDepth: bigintRegex,
+    merkleTreeRoot: bigintRegex,
+    nullifier: bigintRegex,
+    message: bigintRegex,
+    scope: bigintRegex,
+    points: bigintRegex.array().length(8),
+  }),
+})
