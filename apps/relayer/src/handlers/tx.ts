@@ -3,7 +3,7 @@ import { Hex, getAddress, toHex } from 'viem'
 import { z } from 'zod'
 
 import { client } from '../client.js'
-import { CABAL_CONTRACT } from '../contracts.js'
+import { CABAL_CONTRACT_ABI } from '../contracts.js'
 import { txSchema } from '../schema.js'
 
 export async function handleTxRequest(c: Context) {
@@ -22,10 +22,11 @@ export async function handleTxRequest(c: Context) {
     return c.json({ error: 'Invalid request' }, 400)
   }
 
-  const { to, value, data, proof } = formatted
+  const { cabal, to, value, data, proof } = formatted
 
   const tx = await client.simulateContract({
-    ...CABAL_CONTRACT,
+    address: cabal,
+    abi: CABAL_CONTRACT_ABI,
     functionName: 'execute',
     args: [to, value, data, proof],
   })
@@ -36,6 +37,7 @@ export async function handleTxRequest(c: Context) {
 // z.infer<typeof txSchema> is not strict enough
 function formatTxRequest(body: z.infer<typeof txSchema>) {
   return {
+    cabal: getAddress(body.cabal),
     to: getAddress(body.to),
     value: BigInt(body.value),
     data: toHex(body.data),

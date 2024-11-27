@@ -29,6 +29,7 @@ import { z } from 'zod'
 const bigintRegex = z.string().regex(/^[0-9]+$/)
 
 export const txSchema = z.object({
+  cabal: z.string().startsWith('0x'),
   to: z.string().startsWith('0x'),
   value: bigintRegex,
   data: z.string().startsWith('0x'),
