@@ -2,7 +2,7 @@ import { Context } from 'hono'
 import { Hex, getAddress, toHex } from 'viem'
 import { z } from 'zod'
 
-import { baseClient } from '../client.js'
+import { client } from '../client.js'
 import { CABAL_CONTRACT } from '../contracts.js'
 import { txSchema } from '../schema.js'
 
@@ -24,7 +24,7 @@ export async function handleTxRequest(c: Context) {
 
   const { to, value, data, proof } = formatted
 
-  const tx = await baseClient.simulateContract({
+  const tx = await client.simulateContract({
     ...CABAL_CONTRACT,
     functionName: 'execute',
     args: [to, value, data, proof],

@@ -2,7 +2,9 @@
   "name": "monorepo",
   "private": true,
   "scripts": {
-    "prettier": "pnpm --parallel prettier"
+    "prettier": "pnpm --parallel prettier",
+    "relayer:build": "pnpm --filter relayer build",
+    "relayer:start": "pnpm --filter relayer start"
   },
   "engines": {
     "node": ">=18",
