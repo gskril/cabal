@@ -6,15 +6,22 @@ import { generateSaltAndDeploy } from './lib/create2'
 
 async function main() {
   const contractName = 'CabalFactory'
-  const constructorArguments = [] as const
-  const encodedArgs = encodeAbiParameters([], constructorArguments)
+
+  const constructorArguments = [
+    '0xcaba1cC2590F1f72041e01346e2e7307065A9108', // _relayers
+  ] as const
+
+  const encodedArgs = encodeAbiParameters(
+    [{ type: 'address' }],
+    constructorArguments
+  )
 
   const { address } = await generateSaltAndDeploy({
     vanity: '0xcaba1',
     encodedArgs,
     contractName,
     caseSensitive: true,
-    startingIteration: 34287000,
+    startingIteration: 5882000,
   })
 
   console.log(`Deployed ${contractName} to ${address}`)

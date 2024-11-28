@@ -7,14 +7,15 @@ import {Cabal} from "./Cabal.sol";
 /// @notice A factory for creating Cabal contracts.
 contract CabalFactory {
     /// @notice The address of the RelayerRegistry contract.
-    address public constant relayers = 0xcaba1C9708fB81263602ad2D8549b1d8697392BA;
+    address public immutable relayers;
 
     /// @notice The address of the Cabal implementation contract.
     address public immutable implementation;
 
     event CabalCreated(address indexed cabal);
 
-    constructor() {
+    constructor(address _relayers) {
+        relayers = _relayers;
         implementation = address(new Cabal());
     }
 

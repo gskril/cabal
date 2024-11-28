@@ -4,7 +4,7 @@ import { Identity } from '@semaphore-protocol/identity'
 import { generateProof } from '@semaphore-protocol/proof'
 import { expect } from 'chai'
 import hre from 'hardhat'
-import { encodeAbiParameters, keccak256 } from 'viem'
+import { encodeAbiParameters, keccak256, zeroAddress } from 'viem'
 import { hardhat } from 'viem/chains'
 
 import { formatProof } from './utils'
@@ -24,7 +24,9 @@ const identity1 = new Identity(account1Pkey)
 const identity2 = new Identity(account2Pkey)
 
 const deploy = async () => {
-  const cabalFactory = await hre.viem.deployContract('CabalFactory')
+  const cabalFactory = await hre.viem.deployContract('CabalFactory', [
+    zeroAddress,
+  ])
   await cabalFactory.write.createCabal([identity1.commitment])
   const events = await cabalFactory.getEvents.CabalCreated()
   const cabal = await hre.viem.getContractAt('Cabal', events[0].args.cabal!)
