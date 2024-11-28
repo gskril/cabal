@@ -24,9 +24,10 @@ const identity1 = new Identity(account1Pkey)
 const identity2 = new Identity(account2Pkey)
 
 const deploy = async () => {
-  const cabal = await hre.viem.deployContract('Cabal', [
-    identity1.commitment, // _identityCommitment
-  ])
+  const cabalFactory = await hre.viem.deployContract('CabalFactory')
+  await cabalFactory.write.createCabal([identity1.commitment])
+  const events = await cabalFactory.getEvents.CabalCreated()
+  const cabal = await hre.viem.getContractAt('Cabal', events[0].args.cabal!)
 
   // Load up the contract with some ether
   const [walletClient] = await hre.viem.getWalletClients()

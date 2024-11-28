@@ -6,10 +6,7 @@ import hre from 'hardhat'
 const SEVEN_DAYS = 7 * 24 * 60 * 60 // 7 days in seconds
 
 const deploy = async () => {
-  const relayerRegistry = await hre.viem.deployContract('RelayerRegistry', [
-    '0x0000000000000000000000000000000000000000', // _cabal
-  ])
-
+  const relayerRegistry = await hre.viem.deployContract('RelayerRegistry')
   return { relayerRegistry }
 }
 
