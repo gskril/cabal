@@ -5,9 +5,9 @@ import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {Cabal} from "./Cabal.sol";
 
 /// @notice A factory for creating Cabal contracts.
-contract RelayerRegistry {
+contract CabalFactory {
     /// @notice The address of the RelayerRegistry contract.
-    address public immutable relayers;
+    address public constant relayers = 0xcaba1C9708fB81263602ad2D8549b1d8697392BA;
 
     /// @notice The address of the Cabal implementation contract.
     address public immutable implementation;

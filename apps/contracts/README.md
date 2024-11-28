@@ -26,3 +26,10 @@ Compile contracts and run the tests.
 ```bash
 pnpm test
 ```
+
+## Deployments
+
+| Contract        | Network      | Address                                    |
+| --------------- | ------------ | ------------------------------------------ |
+| CabalFactory    | Base Sepolia | 0xcaba182fbF980c3a6620fF463D250331BBAa377e |
+| RelayerRegistry | Base Sepolia | 0xcaba1C9708fB81263602ad2D8549b1d8697392BA |

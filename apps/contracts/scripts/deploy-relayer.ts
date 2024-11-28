@@ -1,26 +1,20 @@
+// npx hardhat run scripts/deploy-relayer.ts --network baseSepolia
 import hre from 'hardhat'
 import { encodeAbiParameters } from 'viem/utils'
 
 import { generateSaltAndDeploy } from './lib/create2'
 
 async function main() {
-  const contractName = 'Contract'
-
-  const constructorArguments = [
-    'Contract', // _name
-  ] as const
-
-  const encodedArgs = encodeAbiParameters(
-    [{ type: 'string' }],
-    constructorArguments
-  )
+  const contractName = 'RelayerRegistry'
+  const constructorArguments = [] as const
+  const encodedArgs = encodeAbiParameters([], constructorArguments)
 
   const { address } = await generateSaltAndDeploy({
-    vanity: '0x000',
+    vanity: '0xcaba1',
     encodedArgs,
     contractName,
-    caseSensitive: false,
-    startingIteration: 0,
+    caseSensitive: true,
+    startingIteration: 15179000,
   })
 
   console.log(`Deployed ${contractName} to ${address}`)
