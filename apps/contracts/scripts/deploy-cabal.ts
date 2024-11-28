@@ -30,6 +30,11 @@ async function main() {
     // Wait 30 seconds for block explorers to index the deployment
     await new Promise((resolve) => setTimeout(resolve, 30_000))
     await hre.run('verify:verify', { address, constructorArguments })
+
+    // Verify the Cabal implementation contract
+    const cabalFactory = await hre.viem.getContractAt('CabalFactory', address)
+    const implementation = await cabalFactory.read.implementation()
+    await hre.run('verify:verify', { address: implementation })
   } catch (error) {
     console.error(error)
   }
