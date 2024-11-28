@@ -32,9 +32,9 @@ contract CabalFactory {
     }
 
     /// @notice Creates a new Cabal contract.
-    function createCabal(uint256 identityCommitment) external returns (address) {
+    function createCabal(uint256 identityCommitment, uint256 feeAmount) external returns (address) {
         address cabal = Clones.clone(implementation);
-        Cabal(payable(cabal)).initialize(identityCommitment);
+        Cabal(payable(cabal)).initialize(identityCommitment, feeAmount);
         emit CabalCreated(address(cabal));
         return cabal;
     }
