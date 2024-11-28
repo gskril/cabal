@@ -14,7 +14,7 @@ async function main() {
     encodedArgs,
     contractName,
     caseSensitive: true,
-    startingIteration: 15179000,
+    startingIteration: 1208000,
   })
 
   console.log(`Deployed ${contractName} to ${address}`)
