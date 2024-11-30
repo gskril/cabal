@@ -1,4 +1,3 @@
-// TODO: Share this with the frontend app
 export const CABAL_FACTORY = {
   address: '0xcaba15de77BC1a93556347030D299995dFE777c6',
   abi: [

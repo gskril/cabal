@@ -2,21 +2,19 @@
 
 import { Identity } from '@semaphore-protocol/identity'
 import { useEffect, useState } from 'react'
-import { CABAL_FACTORY } from 'relayer/contracts'
 import {
   useChainId,
   useSignMessage,
   useSimulateContract,
-  useSwitchChain,
   useWaitForTransactionReceipt,
   useWriteContract,
 } from 'wagmi'
 
 import { Button } from '@/components/ui/button'
+import { CABAL_FACTORY } from '@/lib/contracts'
 
 export function CabalManager() {
   const chainId = useChainId()
-  const chain = useSwitchChain()
   const signature = useSignMessage()
   const transaction = useWriteContract()
   const txStatus = useWaitForTransactionReceipt({ hash: transaction.data })
