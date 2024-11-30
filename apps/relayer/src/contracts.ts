@@ -1,4 +1,193 @@
 // TODO: Share this with the frontend app
+export const CABAL_FACTORY = {
+  address: '0xcaba15de77BC1a93556347030D299995dFE777c6',
+  abi: [
+    {
+      inputs: [
+        {
+          internalType: 'address',
+          name: '_relayers',
+          type: 'address',
+        },
+      ],
+      stateMutability: 'nonpayable',
+      type: 'constructor',
+    },
+    {
+      inputs: [],
+      name: 'FailedDeployment',
+      type: 'error',
+    },
+    {
+      inputs: [
+        {
+          internalType: 'uint256',
+          name: 'balance',
+          type: 'uint256',
+        },
+        {
+          internalType: 'uint256',
+          name: 'needed',
+          type: 'uint256',
+        },
+      ],
+      name: 'InsufficientBalance',
+      type: 'error',
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: true,
+          internalType: 'address',
+          name: 'cabal',
+          type: 'address',
+        },
+      ],
+      name: 'CabalCreated',
+      type: 'event',
+    },
+    {
+      inputs: [
+        {
+          internalType: 'uint256',
+          name: 'identityCommitment',
+          type: 'uint256',
+        },
+      ],
+      name: 'createCabal',
+      outputs: [
+        {
+          internalType: 'address',
+          name: '',
+          type: 'address',
+        },
+      ],
+      stateMutability: 'nonpayable',
+      type: 'function',
+    },
+    {
+      inputs: [],
+      name: 'implementation',
+      outputs: [
+        {
+          internalType: 'address',
+          name: '',
+          type: 'address',
+        },
+      ],
+      stateMutability: 'view',
+      type: 'function',
+    },
+    {
+      inputs: [],
+      name: 'relayers',
+      outputs: [
+        {
+          internalType: 'address',
+          name: '',
+          type: 'address',
+        },
+      ],
+      stateMutability: 'view',
+      type: 'function',
+    },
+  ],
+} as const
+
+export const RELAYER_REGISTRY = {
+  address: '0xcaba1cC2590F1f72041e01346e2e7307065A9108',
+  abi: [
+    {
+      inputs: [
+        {
+          internalType: 'string',
+          name: 'url',
+          type: 'string',
+        },
+      ],
+      name: 'AlreadyExists',
+      type: 'error',
+    },
+    {
+      inputs: [
+        {
+          internalType: 'string',
+          name: 'url',
+          type: 'string',
+        },
+      ],
+      name: 'NotExpired',
+      type: 'error',
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: false,
+          internalType: 'string',
+          name: 'url',
+          type: 'string',
+        },
+      ],
+      name: 'RelayerAdded',
+      type: 'event',
+    },
+    {
+      anonymous: false,
+      inputs: [
+        {
+          indexed: false,
+          internalType: 'string',
+          name: 'url',
+          type: 'string',
+        },
+      ],
+      name: 'RelayerRemoved',
+      type: 'event',
+    },
+    {
+      inputs: [
+        {
+          internalType: 'string',
+          name: 'url',
+          type: 'string',
+        },
+      ],
+      name: 'addRelayer',
+      outputs: [],
+      stateMutability: 'nonpayable',
+      type: 'function',
+    },
+    {
+      inputs: [],
+      name: 'relayerCount',
+      outputs: [
+        {
+          internalType: 'uint256',
+          name: '',
+          type: 'uint256',
+        },
+      ],
+      stateMutability: 'view',
+      type: 'function',
+    },
+    {
+      inputs: [
+        {
+          internalType: 'string',
+          name: 'url',
+          type: 'string',
+        },
+      ],
+      name: 'removeRelayer',
+      outputs: [],
+      stateMutability: 'nonpayable',
+      type: 'function',
+    },
+  ],
+} as const
+
 export const CABAL_CONTRACT_ABI = [
   {
     inputs: [

@@ -156,6 +156,9 @@ importers:
       react-dom:
         specifier: ^18
         version: 18.3.1(react@18.3.1)
+      relayer:
+        specifier: workspace:^
+        version: link:../relayer
       tailwind-merge:
         specifier: ^2.4.0
         version: 2.4.0

@@ -7,6 +7,9 @@
     "start": "tsc && node ./dist/index.js",
     "prettier": "prettier --write ."
   },
+  "exports": {
+    "./contracts": "./src/contracts.ts"
+  },
   "dependencies": {
     "@hono/node-server": "^1.13.7",
     "dotenv": "^16.4.5",
