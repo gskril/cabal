@@ -3,7 +3,7 @@
 > [!NOTE]  
 > This was forked from [@stephancill/share-tx](https://github.com/stephancill/share-tx).
 
-Web app for Cabal. Provides an interface for signing transactions and viewing group activity.
+Web app for Cabal. Provides an interface for signing transactions and viewing group activity. Also includes a [Relayer](#relayer) to execute and earn fees from Cabal transactions.
 
 ## Local Development
 
@@ -24,4 +24,51 @@ Start the development server.
 
 ```bash
 pnpm dev
+```
+
+## Relayer
+
+A Relayer is a simple HTTP server that can execute transactions for Cabal wallets. In addition to the above steps, operating a Relayer requires you to add a few more environment variables:
+
+- `PRIVATE_KEY`: Private key that has a small ETH balance on whichever chain you want to relay transactions on.
+- `RPC_URL`: RPC URL for the chain you want to relay transactions on.
+
+Once the app is running, you should register it in the [Relayer Registry](../contracts/README.md) so that apps can find and use it. Note that the URL should include the path, like `https://{yourdomain}/execute`.
+
+### Schema
+
+The standard relayer interface includes a GET and POST request to the same route. The GET request is used to check if the relayer is online and working, while the POST request is used to receive transaction requests.
+
+#### GET
+
+Healthcheck that returns a 200 status code if the relayer is online and ready to relay transactions. It should return the following JSON body:
+
+```json
+{
+  // If the service is available and the account has enough ETH for gas on relayed transactions
+  "ready": true,
+  // Chain ID that the relayer is running on
+  "chainId": 1337
+}
+```
+
+#### POST
+
+Relayers are expected to support calling any function on [CabalFactory.sol](../contracts/src/CabalFactory.sol) and [Cabal.sol](../contracts/src/Cabal.sol). They will need to parse the request body to determine which function to call on which contract.
+
+An example request body is formatted as follows:
+
+```json
+{
+  // Address of the contract to call (CabalFactory or Cabal)
+  "target": "0xcaba15de77BC1a93556347030D299995dFE777c6",
+  // Chain ID of the chain to send the transaction on
+  "chainId": 84532,
+  // Function selector on the target contract
+  "function": "0xcd358100",
+  // Arguments to pass to the function
+  "args": [
+    "identityCommitment": "15072455385723004728391568434269917452175057560864330595979104241296826134229"
+  ]
+}
 ```

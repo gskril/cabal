@@ -1,17 +1,23 @@
-import { Context } from 'hono'
-import { Hex, getAddress, toHex } from 'viem'
+import { NextRequest, NextResponse } from 'next/server'
+import { toHex } from 'viem'
+import { getAddress } from 'viem'
 import { z } from 'zod'
 
-import { client } from '../client.js'
-import { CABAL_CONTRACT_ABI } from '../contracts.js'
-import { txSchema } from '../schema.js'
+import { client } from '@/lib/client'
+import { CABAL_CONTRACT_ABI } from '@/lib/contracts'
 
-export async function handleTxRequest(c: Context) {
-  const body = await c.req.json()
+import { txSchema } from './schema'
+
+export async function GET(request: NextRequest) {
+  return NextResponse.json({ message: 'Hello, World!' })
+}
+
+export async function POST(request: NextRequest) {
+  const body = await request.json()
   const safeParse = txSchema.safeParse(body)
 
   if (!safeParse.success) {
-    return c.json({ error: safeParse.error }, 400)
+    return NextResponse.json({ error: safeParse.error }, { status: 400 })
   }
 
   let formatted: ReturnType<typeof formatTxRequest>
@@ -19,7 +25,7 @@ export async function handleTxRequest(c: Context) {
   try {
     formatted = formatTxRequest(safeParse.data)
   } catch (error) {
-    return c.json({ error: 'Invalid request' }, 400)
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
 
   const { cabal, to, value, data, proof } = formatted
@@ -31,7 +37,7 @@ export async function handleTxRequest(c: Context) {
     args: [to, value, data, proof],
   })
 
-  return c.json({ message: 'ok', data: tx })
+  return NextResponse.json({ message: 'ok', data: tx })
 }
 
 // z.infer<typeof txSchema> is not strict enough
