@@ -1,15 +1,54 @@
+'server only'
+
 import { NextRequest, NextResponse } from 'next/server'
-import { toHex } from 'viem'
+import { parseEther, toHex } from 'viem'
 import { getAddress } from 'viem'
 import { z } from 'zod'
 
-import { client } from '@/lib/client'
+import { createClient } from '@/lib/client'
 import { CABAL_CONTRACT_ABI } from '@/lib/contracts'
 
-import { txSchema } from './schema'
+import { HealthcheckResponse, querySchema, txSchema } from './schema'
 
-export async function GET(request: NextRequest) {
-  return NextResponse.json({ message: 'Hello, World!' })
+export async function GET(
+  _request: NextRequest,
+  { params }: { [key: string]: string }
+): Promise<NextResponse<HealthcheckResponse>> {
+  const safeParse = querySchema.safeParse(params)
+
+  // Parse the Chain ID from the URL
+  if (!safeParse.success) {
+    return NextResponse.json(
+      {
+        ready: false,
+        message: 'Invalid Chain ID',
+        error: safeParse.error,
+      },
+      { status: 400 }
+    )
+  }
+
+  const { chainId } = safeParse.data
+  const client = createClient(chainId)
+
+  // If we don't have an RPC URL set for this chain, return an error
+  if (!client) {
+    return NextResponse.json(
+      { ready: false, message: 'Unsupported Chain ID' },
+      { status: 400 }
+    )
+  }
+
+  // Check if the relayer has enough ETH to pay for the transaction
+  const balance = await client.getBalance({ address: client.account.address })
+  if (balance < parseEther('0.0015')) {
+    return NextResponse.json(
+      { ready: false, message: 'Insufficient ETH balance' },
+      { status: 400 }
+    )
+  }
+
+  return NextResponse.json({ ready: true, chainId })
 }
 
 export async function POST(request: NextRequest) {
@@ -28,7 +67,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
 
-  const { cabal, to, value, data, proof } = formatted
+  const { chainId, cabal, to, value, data, proof } = formatted
+  const client = createClient(Number(chainId))
+
+  if (!client) {
+    return NextResponse.json({ error: 'Unsupported Chain ID' }, { status: 400 })
+  }
 
   const tx = await client.simulateContract({
     address: cabal,

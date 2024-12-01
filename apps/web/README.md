@@ -31,7 +31,7 @@ pnpm dev
 A Relayer is a simple HTTP server that can execute transactions for Cabal wallets. In addition to the above steps, operating a Relayer requires you to add a few more environment variables:
 
 - `PRIVATE_KEY`: Private key that has a small ETH balance on whichever chain you want to relay transactions on.
-- `RPC_URL`: RPC URL for the chain you want to relay transactions on.
+- `RPC_URL_<chainId>`: RPC URL for the chains you want to relay transactions on.
 
 Once the app is running, you should register it in the [Relayer Registry](../contracts/README.md) so that apps can find and use it. Note that the URL should include the path, like `https://{yourdomain}/execute`.
 
@@ -46,9 +46,11 @@ Healthcheck that returns a 200 status code if the relayer is online and ready to
 ```json
 {
   // If the service is available and the account has enough ETH for gas on relayed transactions
-  "ready": true,
+  "ready": false,
   // Chain ID that the relayer is running on
-  "chainId": 1337
+  "chainId": 1337,
+  // If the service is not available, return a message with the reason to be displayed to the user
+  "message": "The service is currently unavailable"
 }
 ```
 

@@ -43,3 +43,21 @@ export const txSchema = z.object({
     points: bigintRegex.array().length(8),
   }),
 })
+
+export const querySchema = z.object({
+  chainId: z.coerce.number(),
+})
+
+export type HealthcheckResponse =
+  | {
+      ready: true
+      chainId: number
+      message?: undefined
+      error?: undefined
+    }
+  | {
+      ready: false
+      chainId?: undefined
+      message: string
+      error?: any
+    }

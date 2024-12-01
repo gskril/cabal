@@ -9,7 +9,7 @@ if (!WALLETCONNECT_ID) {
 }
 
 const { connectors } = getDefaultWallets({
-  appName: '',
+  appName: 'Cabal',
   projectId: WALLETCONNECT_ID,
 })
 

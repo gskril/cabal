@@ -5,11 +5,19 @@ import { privateKeyToAccount } from 'viem/accounts'
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY as Hex | undefined
 
-if (!PRIVATE_KEY) {
-  throw new Error('PRIVATE_KEY is not set')
-}
+export function createClient(chainId: number) {
+  if (!PRIVATE_KEY) {
+    throw new Error('PRIVATE_KEY is not set')
+  }
 
-export const client = createWalletClient({
-  account: privateKeyToAccount(PRIVATE_KEY),
-  transport: http(process.env.RPC_URL),
-}).extend(publicActions)
+  const rpcUrl = process.env[`RPC_URL_${chainId}`]
+
+  if (!rpcUrl) {
+    return null
+  }
+
+  return createWalletClient({
+    account: privateKeyToAccount(PRIVATE_KEY),
+    transport: http(rpcUrl),
+  }).extend(publicActions)
+}
