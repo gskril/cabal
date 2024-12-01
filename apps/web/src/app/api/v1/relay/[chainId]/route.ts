@@ -1,12 +1,17 @@
 'server only'
 
 import { NextRequest, NextResponse } from 'next/server'
-import { parseEther, toHex } from 'viem'
+import {
+  parseEther,
+  toFunctionSelector,
+  toFunctionSignature,
+  toHex,
+} from 'viem'
 import { getAddress } from 'viem'
 import { z } from 'zod'
 
 import { createClient } from '@/lib/client'
-import { CABAL_CONTRACT_ABI } from '@/lib/contracts'
+import { CABAL_CONTRACT_ABI, CABAL_FACTORY } from '@/lib/contracts'
 
 import { HealthcheckResponse, querySchema, txSchema } from './schema'
 
@@ -67,18 +72,34 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
 
-  const { chainId, cabal, to, value, data, proof } = formatted
+  const { target, chainId, function: func, args } = formatted
   const client = createClient(Number(chainId))
 
   if (!client) {
     return NextResponse.json({ error: 'Unsupported Chain ID' }, { status: 400 })
   }
 
+  const factoryAbiSegment = CABAL_FACTORY.abi
+    .filter(
+      (abi) => abi.type === 'function' && abi.stateMutability === 'nonpayable'
+    )
+    .find((abi) => toFunctionSelector(toFunctionSignature(abi)) === func)
+
+  const cabalAbiSegment = CABAL_CONTRACT_ABI.filter(
+    (abi) => abi.type === 'function' && abi.stateMutability === 'nonpayable'
+  ).find((abi) => toFunctionSelector(toFunctionSignature(abi)) === func)
+
+  const abiSegment = factoryAbiSegment || cabalAbiSegment
+
+  if (!abiSegment) {
+    return NextResponse.json({ error: 'Invalid function' }, { status: 400 })
+  }
+
   const tx = await client.simulateContract({
-    address: cabal,
-    abi: CABAL_CONTRACT_ABI,
-    functionName: 'execute',
-    args: [to, value, data, proof],
+    address: target,
+    abi: [abiSegment],
+    functionName: abiSegment.name,
+    args: args as any,
   })
 
   return NextResponse.json({ message: 'ok', data: tx })
@@ -87,27 +108,28 @@ export async function POST(request: NextRequest) {
 // z.infer<typeof txSchema> is not strict enough
 function formatTxRequest(body: z.infer<typeof txSchema>) {
   return {
-    cabal: getAddress(body.cabal),
-    to: getAddress(body.to),
-    value: BigInt(body.value),
-    data: toHex(body.data),
+    target: getAddress(body.target),
     chainId: BigInt(body.chainId),
-    proof: {
-      merkleTreeDepth: BigInt(body.proof.merkleTreeDepth),
-      merkleTreeRoot: BigInt(body.proof.merkleTreeRoot),
-      nullifier: BigInt(body.proof.nullifier),
-      message: BigInt(body.proof.message),
-      scope: BigInt(body.proof.scope),
-      points: body.proof.points.map(BigInt) as [
-        bigint,
-        bigint,
-        bigint,
-        bigint,
-        bigint,
-        bigint,
-        bigint,
-        bigint,
-      ],
-    },
+    function: toHex(body.function),
+    args: body.args,
+    // value: BigInt(body.value),
+    // data: toHex(body.data),
+    // proof: {
+    //   merkleTreeDepth: BigInt(body.proof.merkleTreeDepth),
+    //   merkleTreeRoot: BigInt(body.proof.merkleTreeRoot),
+    //   nullifier: BigInt(body.proof.nullifier),
+    //   message: BigInt(body.proof.message),
+    //   scope: BigInt(body.proof.scope),
+    //   points: body.proof.points.map(BigInt) as [
+    //     bigint,
+    //     bigint,
+    //     bigint,
+    //     bigint,
+    //     bigint,
+    //     bigint,
+    //     bigint,
+    //     bigint,
+    //   ],
+    // },
   }
 }

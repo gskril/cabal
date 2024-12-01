@@ -29,19 +29,22 @@ import { z } from 'zod'
 const bigintRegex = z.string().regex(/^[0-9]+$/)
 
 export const txSchema = z.object({
-  cabal: z.string().startsWith('0x'),
-  to: z.string().startsWith('0x'),
-  value: bigintRegex,
-  data: z.string().startsWith('0x'),
-  chainId: bigintRegex,
-  proof: z.object({
-    merkleTreeDepth: bigintRegex,
-    merkleTreeRoot: bigintRegex,
-    nullifier: bigintRegex,
-    message: bigintRegex,
-    scope: bigintRegex,
-    points: bigintRegex.array().length(8),
-  }),
+  target: z.string().startsWith('0x'),
+  chainId: z.coerce.number(),
+  function: z.string().startsWith('0x'),
+  args: z.array(z.string()),
+  // cabal: z.string().startsWith('0x'),
+  // to: z.string().startsWith('0x'),
+  // value: bigintRegex,
+  // data: z.string().startsWith('0x'),
+  // proof: z.object({
+  //   merkleTreeDepth: bigintRegex,
+  //   merkleTreeRoot: bigintRegex,
+  //   nullifier: bigintRegex,
+  //   message: bigintRegex,
+  //   scope: bigintRegex,
+  //   points: bigintRegex.array().length(8),
+  // }),
 })
 
 export const querySchema = z.object({
