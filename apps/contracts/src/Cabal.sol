@@ -76,10 +76,12 @@ contract Cabal is Initializable {
 
     /// @notice Initializes the multisig account.
     /// @param _identityCommitment The identity commitment of the first member of the group.
-    function initialize(uint256 _identityCommitment) external initializer {
+    /// @param _feeAmount The amount of ETH paid to a relayer for executing a transaction.
+    function initialize(uint256 _identityCommitment, uint256 _feeAmount) external initializer {
         semaphoreGroupId = semaphore.createGroup();
         semaphore.addMember(semaphoreGroupId, _identityCommitment);
         emit MemberAdded(_identityCommitment);
+        _setFee(_feeAmount);
         uint256 _chainId;
 
         assembly {
@@ -118,9 +120,8 @@ contract Cabal is Initializable {
         // Check if the amount matches `proof.message` so relayers can't modify it
         if (proof.message != amount) revert InvalidIntent();
 
-        // Update the storage variable
-        feeAmount = amount;
-        emit FeeChanged(amount);
+        // Set the fee
+        _setFee(amount);
     }
 
     /// @notice Executes a call to an arbitrary contract.
@@ -210,5 +211,10 @@ contract Cabal is Initializable {
         (bool success,) = payable(msg.sender).call{value: feeAmount}("");
         if (!success) revert FailedToSendFee();
         return feeAmount;
+    }
+
+    function _setFee(uint256 amount) internal {
+        feeAmount = amount;
+        emit FeeChanged(amount);
     }
 }

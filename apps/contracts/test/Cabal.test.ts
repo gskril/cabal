@@ -27,7 +27,7 @@ const deploy = async () => {
   const cabalFactory = await hre.viem.deployContract('CabalFactory', [
     zeroAddress,
   ])
-  await cabalFactory.write.createCabal([identity1.commitment])
+  await cabalFactory.write.createCabal([identity1.commitment, 0n])
   const events = await cabalFactory.getEvents.CabalCreated()
   const cabal = await hre.viem.getContractAt('Cabal', events[0].args.cabal!)
 
