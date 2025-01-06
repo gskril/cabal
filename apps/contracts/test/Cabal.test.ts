@@ -27,7 +27,7 @@ const deploy = async () => {
   const cabalFactory = await hre.viem.deployContract('CabalFactory', [
     zeroAddress,
   ])
-  await cabalFactory.write.createCabal([identity1.commitment])
+  await cabalFactory.write.createCabal([identity1.commitment, 100n])
   const events = await cabalFactory.getEvents.CabalCreated()
   const cabal = await hre.viem.getContractAt('Cabal', events[0].args.cabal!)
 
@@ -35,7 +35,7 @@ const deploy = async () => {
   const [walletClient] = await hre.viem.getWalletClients()
   await walletClient.sendTransaction({
     to: cabal.address,
-    value: BigInt(2000),
+    value: BigInt(20000),
   })
 
   return { cabal }
@@ -56,7 +56,7 @@ describe('Cabal', function () {
       expect(chainId).to.equal(BigInt(hardhat.id))
     })
 
-    it('should let relayers execute signed calls', async function () {
+    it('should let relayers execute signed calls and pay out the fee', async function () {
       const { cabal } = await loadFixture(deploy)
 
       const abiEncodedCalldata = encodeAbiParameters(
@@ -79,6 +79,12 @@ describe('Cabal', function () {
       const message = BigInt(keccak256(abiEncodedCalldata)) // Hashed calldata
       const proof = await generateProof(identity1, group, message, scope)
 
+      const account1BalanceBefore = await (
+        await hre.viem.getPublicClient()
+      ).getBalance({
+        address: account1,
+      })
+
       const sendEtherTx = cabal.write.execute(
         [
           account2, // to
@@ -90,6 +96,25 @@ describe('Cabal', function () {
       )
 
       await expect(sendEtherTx).to.be.fulfilled
+
+      const account1BalanceAfter = await (
+        await hre.viem.getPublicClient()
+      ).getBalance({
+        address: account1,
+      })
+
+      const { cumulativeGasUsed, effectiveGasPrice } = await (
+        await hre.viem.getPublicClient()
+      ).getTransactionReceipt({
+        hash: await sendEtherTx,
+      })
+
+      const ethSubtractedFromGasFee = cumulativeGasUsed * effectiveGasPrice
+
+      const fee = await cabal.read.feeAmount()
+      expect(account1BalanceAfter).to.be.equal(
+        account1BalanceBefore + fee - ethSubtractedFromGasFee
+      )
     })
 
     it('should let a member add new members', async function () {

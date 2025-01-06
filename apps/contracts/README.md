@@ -31,5 +31,7 @@ pnpm test
 
 | Contract        | Network      | Address                                    |
 | --------------- | ------------ | ------------------------------------------ |
-| CabalFactory    | Base Sepolia | 0xcaba15de77BC1a93556347030D299995dFE777c6 |
+| CabalFactory    | Base         | 0xcaba192BB6D2b5fCeC3808Ecc7bBAbf1392e0Ae9 |
+| CabalFactory    | Base Sepolia | 0xcaba192BB6D2b5fCeC3808Ecc7bBAbf1392e0Ae9 |
+| RelayerRegistry | Base         | 0xcaba1cC2590F1f72041e01346e2e7307065A9108 |
 | RelayerRegistry | Base Sepolia | 0xcaba1cC2590F1f72041e01346e2e7307065A9108 |
