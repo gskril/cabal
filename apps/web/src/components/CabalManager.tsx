@@ -4,7 +4,7 @@ import { useConnectModal } from '@rainbow-me/rainbowkit'
 import { Identity } from '@semaphore-protocol/identity'
 import { Info, Terminal } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { toFunctionSelector } from 'viem'
+import { Hex, toFunctionSelector } from 'viem'
 import { toFunctionSignature } from 'viem'
 import {
   useAccount,
@@ -14,7 +14,7 @@ import {
   useWaitForTransactionReceipt,
   useWriteContract,
 } from 'wagmi'
-import { base } from 'wagmi/chains'
+import { base, baseSepolia } from 'wagmi/chains'
 
 import { Tx } from '@/app/api/v1/relay/[chainId]/schema'
 import { Button } from '@/components/ui/button'
@@ -28,12 +28,15 @@ export function CabalManager() {
   const { openConnectModal } = useConnectModal()
   const chainId = useChainId()
   const signature = useSignMessage()
-  const transaction = useWriteContract()
-  const txStatus = useWaitForTransactionReceipt({ hash: transaction.data })
+  const [createCabalTxHash, setCreateCabalTxHash] = useState<Hex>()
+  const txStatus = useWaitForTransactionReceipt({
+    hash: createCabalTxHash,
+    chainId: baseSepolia.id,
+  })
 
   const [commitment, setCommitment] = useState<bigint | null>(null)
   const simulate = useSimulateContract({
-    chainId: base.id,
+    chainId: baseSepolia.id,
     ...CABAL_FACTORY,
     functionName: 'createCabal',
     args: !!commitment ? [commitment, BigInt(0)] : undefined,
@@ -65,8 +68,6 @@ export function CabalManager() {
         by signing a message with your wallet. This derives an anonymous
         identity from your existing private key.
       </p>
-
-      {commitment && <p>Commitment: {commitment.toString()}</p>}
 
       <div className="space-y-1">
         {(() => {
@@ -120,7 +121,8 @@ export function CabalManager() {
                     return alert('Failed to create Cabal')
                   }
 
-                  const data = (await res.json()) as { data: string }
+                  const data = (await res.json()) as { data: Hex }
+                  setCreateCabalTxHash(data.data)
                   return alert(`Transaction hash: ${data.data}`)
                 }}
               >
@@ -131,7 +133,7 @@ export function CabalManager() {
         })()}
 
         <p>
-          {!!transaction.data && txStatus.isPending && 'Creating Cabal...'}
+          {!!createCabalTxHash && txStatus.isPending && 'Creating Cabal...'}
           {txStatus.isSuccess && 'Cabal created successfully'}
           {txStatus.isError && 'Cabal creation failed'}
         </p>
