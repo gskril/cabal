@@ -31,7 +31,7 @@ const bigintRegex = z.string().regex(/^[0-9]+$/)
 export const txSchema = z.object({
   target: z.string().startsWith('0x'),
   chainId: z.coerce.number(),
-  function: z.string().startsWith('0x'),
+  function: z.string(),
   args: z.array(z.string()),
   // cabal: z.string().startsWith('0x'),
   // to: z.string().startsWith('0x'),
@@ -46,6 +46,8 @@ export const txSchema = z.object({
   //   points: bigintRegex.array().length(8),
   // }),
 })
+
+export type Tx = z.infer<typeof txSchema>
 
 export const querySchema = z.object({
   chainId: z.coerce.number(),

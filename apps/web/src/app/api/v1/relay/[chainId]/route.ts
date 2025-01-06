@@ -1,13 +1,7 @@
 'server only'
 
 import { NextRequest, NextResponse } from 'next/server'
-import {
-  parseEther,
-  toFunctionSelector,
-  toFunctionSignature,
-  toHex,
-} from 'viem'
-import { getAddress } from 'viem'
+import { getAddress, parseEther } from 'viem'
 import { z } from 'zod'
 
 import { createClient } from '@/lib/client'
@@ -72,24 +66,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
   }
 
-  const { target, chainId, function: func, args } = formatted
+  const { target, chainId, function: functionName, args } = formatted
   const client = createClient(Number(chainId))
 
   if (!client) {
     return NextResponse.json({ error: 'Unsupported Chain ID' }, { status: 400 })
   }
 
-  const factoryAbiSegment = CABAL_FACTORY.abi
-    .filter(
-      (abi) => abi.type === 'function' && abi.stateMutability === 'nonpayable'
-    )
-    .find((abi) => toFunctionSelector(toFunctionSignature(abi)) === func)
+  const factoryAbiSegment = CABAL_FACTORY.abi.find(
+    (seg) => seg.type === 'function' && seg.name === functionName
+  )
 
-  const cabalAbiSegment = CABAL_CONTRACT_ABI.filter(
-    (abi) => abi.type === 'function' && abi.stateMutability === 'nonpayable'
-  ).find((abi) => toFunctionSelector(toFunctionSignature(abi)) === func)
+  const cabalAbiSegment = CABAL_CONTRACT_ABI.find(
+    (seg) => seg.type === 'function' && seg.name === functionName
+  )
 
-  const abiSegment = factoryAbiSegment || cabalAbiSegment
+  const abiSegment = cabalAbiSegment || factoryAbiSegment
 
   if (!abiSegment) {
     return NextResponse.json({ error: 'Invalid function' }, { status: 400 })
@@ -98,11 +90,21 @@ export async function POST(request: NextRequest) {
   const tx = await client.simulateContract({
     address: target,
     abi: [abiSegment],
-    functionName: abiSegment.name,
-    args: args as any,
+    // @ts-expect-error
+    functionName,
+    // @ts-expect-error
+    args,
   })
 
-  return NextResponse.json({ message: 'ok', data: tx })
+  if (!tx.result) {
+    return NextResponse.json(
+      { error: 'Failed to simulate transaction' },
+      { status: 400 }
+    )
+  }
+
+  const txHash = await client.writeContract(tx.request)
+  return NextResponse.json({ message: 'ok', data: txHash })
 }
 
 // z.infer<typeof txSchema> is not strict enough
@@ -110,7 +112,7 @@ function formatTxRequest(body: z.infer<typeof txSchema>) {
   return {
     target: getAddress(body.target),
     chainId: BigInt(body.chainId),
-    function: toHex(body.function),
+    function: body.function,
     args: body.args,
     // value: BigInt(body.value),
     // data: toHex(body.data),

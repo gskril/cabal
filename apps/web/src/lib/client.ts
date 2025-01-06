@@ -2,6 +2,7 @@
 
 import { Hex, createWalletClient, http, publicActions } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
+import * as chains from 'viem/chains'
 
 const PRIVATE_KEY = process.env.PRIVATE_KEY as Hex | undefined
 
@@ -16,8 +17,16 @@ export function createClient(chainId: number) {
     return null
   }
 
+  const allChains = Object.values(chains)
+  const chain = allChains.find((c) => c.id === chainId)
+
+  if (!chain) {
+    return null
+  }
+
   return createWalletClient({
     account: privateKeyToAccount(PRIVATE_KEY),
     transport: http(rpcUrl),
+    chain,
   }).extend(publicActions)
 }

@@ -36,3 +36,20 @@ export function scaleMagnitude(value: string, magnitude: number) {
 export function getChainName(chainId: SupportedChainId) {
   return chains.find((chain) => chain.id === chainId)?.name || 'Unknown Chain'
 }
+
+export function convertBigintToString(value: bigint | object): string | object {
+  if (typeof value === 'bigint') {
+    return value.toString()
+  }
+
+  if (typeof value === 'object' && value !== null) {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, val]) => [
+        key,
+        typeof val === 'bigint' ? val.toString() : val,
+      ])
+    )
+  }
+
+  return value
+}

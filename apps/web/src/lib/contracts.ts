@@ -1,5 +1,5 @@
 export const CABAL_FACTORY = {
-  address: '0xcaba15de77BC1a93556347030D299995dFE777c6',
+  address: '0xcaba192BB6D2b5fCeC3808Ecc7bBAbf1392e0Ae9',
   abi: [
     {
       inputs: [
@@ -51,6 +51,11 @@ export const CABAL_FACTORY = {
         {
           internalType: 'uint256',
           name: 'identityCommitment',
+          type: 'uint256',
+        },
+        {
+          internalType: 'uint256',
+          name: 'feeAmount',
           type: 'uint256',
         },
       ],

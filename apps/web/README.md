@@ -63,14 +63,15 @@ An example request body is formatted as follows:
 ```json
 {
   // Address of the contract to call (CabalFactory or Cabal)
-  "target": "0xcaba15de77BC1a93556347030D299995dFE777c6",
+  "target": "0xcaba192BB6D2b5fCeC3808Ecc7bBAbf1392e0Ae9",
   // Chain ID of the chain to send the transaction on
-  "chainId": 84532,
-  // Function selector on the target contract
-  "function": "0xcd358100",
+  "chainId": 8453,
+  // Function name on the target contract
+  "function": "createCabal",
   // Arguments to pass to the function
   "args": [
-    "identityCommitment": "15072455385723004728391568434269917452175057560864330595979104241296826134229"
+    "21344552451673981039923583252399396490599926921642695445913578891340383234428",
+    "0"
   ]
 }
 ```

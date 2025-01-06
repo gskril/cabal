@@ -1,19 +1,31 @@
 'use client'
 
+import { useConnectModal } from '@rainbow-me/rainbowkit'
 import { Identity } from '@semaphore-protocol/identity'
+import { Info, Terminal } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { toFunctionSelector } from 'viem'
+import { toFunctionSignature } from 'viem'
 import {
+  useAccount,
   useChainId,
   useSignMessage,
   useSimulateContract,
   useWaitForTransactionReceipt,
   useWriteContract,
 } from 'wagmi'
+import { base } from 'wagmi/chains'
 
+import { Tx } from '@/app/api/v1/relay/[chainId]/schema'
 import { Button } from '@/components/ui/button'
 import { CABAL_FACTORY } from '@/lib/contracts'
+import { convertBigintToString } from '@/lib/utils'
+
+import { Alert, AlertDescription, AlertTitle } from './ui/alert'
 
 export function CabalManager() {
+  const { address } = useAccount()
+  const { openConnectModal } = useConnectModal()
   const chainId = useChainId()
   const signature = useSignMessage()
   const transaction = useWriteContract()
@@ -21,10 +33,10 @@ export function CabalManager() {
 
   const [commitment, setCommitment] = useState<bigint | null>(null)
   const simulate = useSimulateContract({
-    chainId,
+    chainId: base.id,
     ...CABAL_FACTORY,
     functionName: 'createCabal',
-    args: !!commitment ? [commitment] : undefined,
+    args: !!commitment ? [commitment, BigInt(0)] : undefined,
   })
 
   useEffect(() => {
@@ -37,27 +49,31 @@ export function CabalManager() {
   return (
     <div className="space-y-4">
       <p>
-        Cabal is an anonymous, shared smart contract wallet powered by{' '}
-        <a href="https://semaphore.pse.dev/" target="_blank">
-          Semaphore
-        </a>
-        .
+        Cabal is an anonymous, shared smart contract wallet. Thanks to
+        zero-knowledge proofs, any Cabal member can sign a transaction without
+        revealing who they are.
       </p>
 
       <p>
-        First, sign this message. Your address is not saved anywhere, but the
-        hash is used to create a{' '}
+        To get started, create a{' '}
         <a
           href="https://docs.semaphore.pse.dev/guides/identities"
           target="_blank"
         >
           Semaphore Identity
-        </a>
-        .
+        </a>{' '}
+        by signing a message with your wallet. This derives an anonymous
+        identity from your existing private key.
       </p>
+
+      {commitment && <p>Commitment: {commitment.toString()}</p>}
 
       <div className="space-y-1">
         {(() => {
+          if (!address) {
+            return <Button onClick={openConnectModal}>Connect Wallet</Button>
+          }
+
           return (
             <div className="flex gap-2">
               <Button
@@ -70,15 +86,42 @@ export function CabalManager() {
                 Create Identity
               </Button>
               <Button
-                disabled={!commitment || (!!commitment && simulate.isLoading)}
+                disabled={!commitment}
                 isLoading={!!commitment && simulate.isLoading}
-                onClick={() => {
+                onClick={async () => {
                   if (!simulate.data) {
                     return alert('Unreachable because the button is disabled')
                   }
 
                   // Call out to the relayer
-                  console.log(simulate.data.request.args)
+                  const functionSelector = toFunctionSelector(
+                    simulate.data.request.abi[0]
+                  )
+
+                  if (!functionSelector) {
+                    return alert('Function selector not found')
+                  }
+
+                  const body: Tx = {
+                    target: CABAL_FACTORY.address,
+                    chainId: Number(chainId),
+                    function: simulate.data.request.functionName,
+                    args: simulate.data.request.args.map((arg) =>
+                      arg.toString()
+                    ),
+                  }
+
+                  const res = await fetch(`/api/v1/relay/${chainId}`, {
+                    method: 'POST',
+                    body: JSON.stringify(body),
+                  })
+
+                  if (!res.ok) {
+                    return alert('Failed to create Cabal')
+                  }
+
+                  const data = (await res.json()) as { data: string }
+                  return alert(`Transaction hash: ${data.data}`)
                 }}
               >
                 Create Cabal
@@ -93,6 +136,15 @@ export function CabalManager() {
           {txStatus.isError && 'Cabal creation failed'}
         </p>
       </div>
+
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertTitle>Heads up!</AlertTitle>
+        <AlertDescription>
+          If you create multiple Cabals via this frontend, the public will be
+          able to see that the same signer exists across them.
+        </AlertDescription>
+      </Alert>
     </div>
   )
 }
